@@ -1,0 +1,13 @@
+# 系統與環境檔案
+__pycache__/
+.venv/
+.DS_Store
+
+# 專案產出的暫存檔 (避免 Git 衝突)
+results.csv
+results.json
+stocks.json
+
+# 其他開發雜物
+data_fetcher.py
+test_single.py
