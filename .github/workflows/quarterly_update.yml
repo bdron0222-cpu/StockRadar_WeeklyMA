@@ -9,20 +9,27 @@ on:
 jobs:
   update-list:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # 必須給予寫入權限才能自動 Push
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          
       - name: Install dependencies
-        run: pip install pandas yfinance
+        run: pip install pandas yfinance requests
+        
       - name: Update stock universe
-        run: python update_stock_list.py # 你的更新腳本
-      - name: Commit and push
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git add stocks.json
-          git commit -m "chore: quarterly update of stock list"
-          git push
+        # 這行已經幫你改成正確的檔案名稱 generate_watchlist.py
+        run: python generate_watchlist.py
+        
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: quarterly update of stock list"
+          # 這會自動把這些生成的檔案上傳回 GitHub
+          file_pattern: 'watchlist.csv raw_watchlist.csv'

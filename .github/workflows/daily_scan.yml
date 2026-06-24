@@ -10,34 +10,30 @@ jobs:
   run-scanner:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 允許 GitHub Action 將更新後的檔案推回儲存庫
+      contents: write # 必須保留此權限以允許寫入
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # 執行更新清單
-      - name: Update stock list
-        run: python fetch_stocks.py
+      # 1. 生成 raw_watchlist.csv
+      - name: Update raw stock list
+        run: python generate_watchlist.py
 
-      # 執行掃描
+      # 2. 執行 main.py (會自動執行清洗與掃描)
       - name: Run scanner
         run: python main.py
 
-      # 自動 Commit 更新後的結果檔案
-      - name: Commit results
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-          # 將所有生成的資料檔加入儲存庫
-          git add results.csv stocks.json results.json
-          # 如果有變更才 commit，避免沒有資料更新時產生報錯
-          git commit -m "Update stock data: $(date +'%Y-%m-%d')" || exit 0
-          git push
+      # 3. 自動 Commit 更新後的結果
+      - name: Commit and Push results
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto-update stock analysis: $(date +'%Y-%m-%d')"
+          file_pattern: 'results.csv watchlist.csv raw_watchlist.csv'
