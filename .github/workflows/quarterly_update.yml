@@ -1,0 +1,28 @@
+name: Quarterly Stock List Update
+
+on:
+  schedule:
+    # 設定在每季的第一個月（1, 4, 7, 10月）的第一天 00:00 UTC 執行
+    - cron: '0 0 1 1,4,7,10 *'
+  workflow_dispatch: # 允許你隨時手動點擊執行
+
+jobs:
+  update-list:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install pandas yfinance
+      - name: Update stock universe
+        run: python update_stock_list.py # 你的更新腳本
+      - name: Commit and push
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add stocks.json
+          git commit -m "chore: quarterly update of stock list"
+          git push

@@ -1,51 +1,26 @@
-import json
-import concurrent.futures
-import pandas as pd
-from tqdm import tqdm
-from data_fetcher import get_daily_data
-from scanner import check_criteria
-
-def process_stock(stock_info):
-    # stock_info 現在是一個字典，例如 {'code': '2330.TW', 'name': '台積電'}
-    ticker = stock_info['code']
-    name = stock_info['name']
-    
-    try:
-        df = get_daily_data(ticker)
-        if df is not None and not df.empty:
-            passed = check_criteria(df)
-            if passed:
-                return {'代號': ticker, '名稱': name}
-    except Exception:
-        pass
-    return None
+import check_and_update_stocks
+from scanner import run_scanner
 
 def main():
+    print("=== 系統啟動：開始執行全自動金融資料管線 ===")
+    
+    # 1. 第一階段：資料清洗與標準化 (Clean Data)
+    # 讀取 raw_watchlist.csv，過濾 ETF、補上 .TW/.TWO 代碼，產出 watchlist.csv
     try:
-        with open('stocks.json', 'r', encoding='utf-8') as f:
-            stock_list = json.load(f).get('watchlist', [])
-    except:
-        print("無法讀取 stocks.json")
+        check_and_update_stocks.update_watchlist()
+    except Exception as e:
+        print(f"資料清洗階段發生錯誤: {e}")
         return
 
-    results = []
-
-    print(f"=== 開始正式掃描 (共 {len(stock_list)} 檔) ===")
+    # 2. 第二階段：正式掃描 (Run Scanner)
+    # 讀取標準化後的 watchlist.csv 並執行技術指標篩選
+    try:
+        run_scanner()
+    except Exception as e:
+        print(f"掃描階段發生錯誤: {e}")
+        return
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        # 這裡改為傳入整個字典
-        futures = {executor.submit(process_stock, item): item['code'] for item in stock_list}
-        
-        for future in tqdm(concurrent.futures.as_completed(futures), total=len(stock_list), desc="掃描中"):
-            res = future.result()
-            if res:
-                results.append(res)
-
-    if results:
-        pd.DataFrame(results).to_csv('results.csv', index=False, encoding='utf-8-sig')
-        print(f"\n=== 掃描完成！共找到 {len(results)} 檔，結果已存入 results.csv ===")
-    else:
-        print("\n=== 掃描完成，沒有符合條件的股票 ===")
+    print("=== 系統結束：全自動掃描管線執行完畢 ===")
 
 if __name__ == "__main__":
     main()
