@@ -2,8 +2,8 @@ name: Stock Radar Automation
 
 on:
   schedule:
-    - cron: '0 8 * * *' 
-  workflow_dispatch: 
+    - cron: '0 8 * * *'
+  workflow_dispatch:
 
 jobs:
   run-scanner:
@@ -23,11 +23,17 @@ jobs:
       - name: Run scanner
         run: python main.py
 
-      - name: Create heartbeat file
-        run: echo "Last run: $(date)" > heartbeat.txt
-
       - name: Commit and Push results
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Auto-update stock analysis and keep-alive"
-          file_pattern: "results.csv watchlist.csv raw_watchlist.csv heartbeat.txt"
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          
+          # 建立心跳檔案，確保倉庫活躍
+          echo "Last run: $(date)" > heartbeat.txt
+          
+          # 將檔案加入追蹤 (如果檔案不存在會被忽略，不會報錯)
+          git add results.csv watchlist.csv raw_watchlist.csv heartbeat.txt
+          
+          # 提交並推送到 GitHub
+          git commit -m "Auto-update stock analysis and keep-alive" || exit 0
+          git push
