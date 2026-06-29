@@ -30,4 +30,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Auto-update stock analysis and keep-alive"
-          file_pattern: 'results.csv watchlist.csv raw_watchlist.csv heartbeat.txt'
+          file_pattern: "results.csv watchlist.csv raw_watchlist.csv heartbeat.txt"
