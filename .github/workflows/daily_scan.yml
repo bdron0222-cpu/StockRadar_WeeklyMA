@@ -17,19 +17,15 @@ jobs:
           python-version: '3.12'
       - run: pip install -r requirements.txt
       
-      # 1. 更新股票清單
       - name: Update stock list
         run: python generate_watchlist.py
       
-      # 2. 執行掃描
       - name: Run scanner
         run: python main.py
 
-      # 【心跳機制】：產生一個時間戳記檔案，確保每天都有變動
       - name: Create heartbeat file
         run: echo "Last run: $(date)" > heartbeat.txt
 
-      # 3. 提交結果 (將 heartbeat.txt 加入 file_pattern)
       - name: Commit and Push results
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
